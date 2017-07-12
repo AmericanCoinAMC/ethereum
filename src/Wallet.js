@@ -93,5 +93,6 @@ Wallet.prototype.cleanPrefix = function(key) {
     }
 };
 
+
 // export the class
 module.exports = Wallet;
