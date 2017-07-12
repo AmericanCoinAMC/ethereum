@@ -2,9 +2,16 @@
  * Created by jessdotjs on 10/07/17.
  */
 var ethereumjsWallet = require('ethereumjs-wallet');
+var Web3 = require("web3");
+const web3 = new Web3();
 
-function Wallet (){
-
+function Wallet (web3Node,firebaseInstance){
+    if(web3Node) {
+        this.web3Node = web3Node;
+    }
+    if(firebaseInstance) {
+        this.firebaseInstance = firebaseInstance;
+    }
 };
 
 Wallet.prototype.create = function(password) {
@@ -82,9 +89,6 @@ Wallet.prototype.decryptWithPrivateKey = function (privateKey){
     }
 };
 
-
-
-
 Wallet.prototype.cleanPrefix = function(key) {
     if(key[0] === '0' && key[1] === 'x'){
         return key.substring(2);
@@ -92,6 +96,11 @@ Wallet.prototype.cleanPrefix = function(key) {
         return key;
     }
 };
+
+Wallet.prototype.getTransactions = function(limit) {
+    
+}
+
 
 
 // export the class
