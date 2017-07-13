@@ -106,7 +106,7 @@ Wallet.prototype.cleanPrefix = function(key) {
 Wallet.prototype.getTransactions = function(limit,address) {
     var addrAux = (address) ? address : this.address;
     var err;
-    //If dont have an address I will throw an error be prepare to catch it.
+    //If I dont have an address I will throw an error be prepare to catch it.
     if (!addrAux){
         err =  new Error('No address found');
         err.name = 'NoAddressError';
