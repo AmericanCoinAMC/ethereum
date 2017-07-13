@@ -2,15 +2,19 @@
  * Created by jessdotjs on 10/07/17.
  */
 var ethereumjsWallet = require('ethereumjs-wallet');
+const firebase = require('firebase');
 var Web3 = require("web3");
 const web3 = new Web3();
 
-function Wallet (web3Node,firebaseInstance){
+function Wallet (web3Node,firebaseInstance,address){
     if(web3Node) {
         this.web3Node = web3Node;
     }
     if(firebaseInstance) {
         this.firebaseInstance = firebaseInstance;
+    }
+    if(address && typeof address === 'string'){
+        this.address = (address.length === 42) ? address.substring(2) : address ;
     }
 };
 
@@ -28,6 +32,7 @@ Wallet.prototype.create = function(password) {
             addressString: generatedWallet.getAddressString(),
             checksumAddress: generatedWallet.getChecksumAddressString(),
             walletFileName: this.generateWalletName(),
+            //This shoudlnt be here, the object must not know anything about http protocol.
             walletFile: 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(walletFile))
         }
     }else {
@@ -97,8 +102,29 @@ Wallet.prototype.cleanPrefix = function(key) {
     }
 };
 
-Wallet.prototype.getTransactions = function(limit) {
-    
+//To be tested
+Wallet.prototype.getTransactions = function(limit,address) {
+    var addrAux = (address) ? address : this.address;
+    var err;
+    //If dont have an address I will throw an error be prepare to catch it.
+    if (!addrAux){
+        err =  new Error('No address found');
+        err.name = 'NoAddressError';
+        return err;
+    }
+    //Query the database.
+    // We don't know how much time this will take so better return a promise
+    return new Promise((resolve,reject) => {
+        this.firebaseInstance.ref('address/'+addrAux)
+            .limitToFirst(limit)
+            .once("value",
+            (snapshot,opionalString) => {
+                resolve(snapshot.val());
+            },
+            (errorObject) => {
+                reject(errorObject);
+            });
+    });
 }
 
 
