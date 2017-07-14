@@ -4,8 +4,8 @@ var Web3 = require("web3");
 
 function TransactionListener(web3Node,firebaseDatabase) {
     var err;
-    if(web3Node){
-        this.web3Node = web3Node;
+    if(web3Node.isConnected()){
+        this.web3 = web3Node;
     }
     else {
         err = new Error("A web3 valid instance must be provided");

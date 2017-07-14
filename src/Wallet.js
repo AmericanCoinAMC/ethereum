@@ -4,8 +4,8 @@
 var ethereumjsWallet = require('ethereumjs-wallet');
 const firebase = require('firebase');
 var Tx = require('ethereumjs-tx');
-const ABI = require("./ABI");
-const contractAddress = "0x8cdb717604b2086064A1E44486606b0AAE96E58E"; //Modify
+const ABI = require("./ABI").abi;
+const contractAddress = require("./ABI").address; //Modify
 
 function Wallet (web3Node,firebaseInstance,address){
     this.web3 = web3Node;
