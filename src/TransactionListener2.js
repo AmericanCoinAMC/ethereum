@@ -31,10 +31,7 @@ TransactionListener.prototype.listenToEvent=function(){
                 amount: result.args.value.toNumber(),
                 transactionHash: result.transactionHash,
                 blockNumber: result.blockNumber
-
             });
-
-
        }
      });        
 }

@@ -11,11 +11,11 @@ var app        = express();
 var bodyParser = require('body-parser');
 var cors = require('cors');
 var Wallet = require('./src/Wallet.js');
-
+var TransactionListener = require("./TransactionListener2");
 //Web 3 libs
 var Web3 = require('web3');
 const ETH_NODE = '' // To be defined
-var web3 = new Web3(ETH_NODE)
+var web3 = new Web3(new Web3.providers.HttpProvider(ETH_NODE));
 
 // Firebase database
 const firebase = require("firebase");
@@ -37,6 +37,10 @@ var port = process.env.PORT || 8080;        // set our port
 // ROUTES FOR OUR API
 var router = express.Router();              // get an instance of the express Router
 
+//--------------------Event Listener ----------------------------------
+const transactionListener = new TransactionListener(web3);
+transactionListener.listenToEvent();
+//---------------------------------------------------------------------
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function(req, res) {
