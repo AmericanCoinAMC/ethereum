@@ -19,15 +19,8 @@ var web3 = new Web3(ETH_NODE)
 
 // Firebase database
 const firebase = require("firebase");
-var config = {
-    apiKey: "AIzaSyDkbUvURJTxHHc8nAw9Hifis_L9VWjZkAM",
-    authDomain: "americancoin-47230.firebaseapp.com",
-    databaseURL: "https://americancoin-47230.firebaseio.com",
-    projectId: "americancoin-47230",
-    storageBucket: "americancoin-47230.appspot.com",
-    messagingSenderId: "59474180269"
-};
-firebase.initzializeApp(config)
+const config = require("./config");
+firebase.initializeApp(config)
 var database = firebase.database(); // Get database instance
 
 // configure app to use bodyParser()
