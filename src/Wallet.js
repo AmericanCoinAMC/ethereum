@@ -4,14 +4,15 @@
 var ethereumjsWallet = require('ethereumjs-wallet');
 const firebase = require('firebase');
 var Tx = require('ethereumjs-tx');
-const ABI = require("./ABI").abi;
-const contractAddress = require("./ABI").address; //Modify
+const ABI = require("./Contract").abi;
+const contractAddress = require("./Contract").address; //Modify
 
 function Wallet (web3Node,firebaseInstance,address){
-    this.web3 = web3Node;
-    var MyContract = this.web3.eth.contract(ABI);
-    this.myContractInstance = MyContract.at(contractAddress);
-   
+    if(web3Node.isConnected()){
+        this.web3 = web3Node;
+        var MyContract = this.web3.eth.contract(ABI);
+        this.myContractInstance = MyContract.at(contractAddress);    
+    }
     if(firebaseInstance) {
         this.firebaseInstance = firebaseInstance;
     }
@@ -130,8 +131,13 @@ Wallet.prototype.getTransactions = function(limit,address) {
 }
 
 Wallet.prototype.getBalance = function (address){
-    var balance = this.myContractInstance.balanceOf(address).c[0];
+    var balance = this.myContractInstance.balanceOf(address).toNumber();
     return balance;
+}
+
+Wallet.prototype.getEthereumBalance = function (address){ //Ethereum balance
+    var balance = this.web3.eth.getBalance(address);
+    return this.web3.fromWei(balance.toNumber(),"ether");
 }
 
 Wallet.prototype.sendTransaction = function(fromAddress,toAddress,amount,gasLimit,PrivateKey){
@@ -153,16 +159,12 @@ Wallet.prototype.sendTransaction = function(fromAddress,toAddress,amount,gasLimi
         var tx = new Tx(rawTx);
         tx.sign(privateKey); //Sign transaction
         var serializedTx = '0x'+ tx.serialize().toString('hex');
-       self.web3.eth.sendRawTransaction(serializedTx, function(err, hash) {
+        self.web3.eth.sendRawTransaction(serializedTx, function(err, hash) {
             if (err) {
                 reject(err);
             }
-
         });
-
     });
-
-
 }
 
 
