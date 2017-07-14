@@ -65,7 +65,7 @@ TransactionListener.prototype.setAddressContract = function(address){
     }
 }
 
-TransactionListener.prototype.listenToEvent = function(eventName,customName) {
+TransactionListener.prototype.listenToEvent = function(eventName,customName,callback) {
     var err;
     var eventFuntion;
     var eventObject;
@@ -83,8 +83,10 @@ TransactionListener.prototype.listenToEvent = function(eventName,customName) {
         err.message = "EventNameNotString";
         throw err;
     }
-    eventFuntion = this.contract[eventName] // This is the event function of the contract.
-    //Lesther, fill this with the transaction listenining.
+    
+    eventFuntion = this.contract[eventName]
+    eventObject = eventFuntion();
+    eventObject.watch(callback);
 
 
     if(customName && typeof customName !== 'string'){

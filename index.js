@@ -11,11 +11,13 @@ var app        = express();
 var bodyParser = require('body-parser');
 var cors = require('cors');
 var Wallet = require('./src/Wallet.js');
+var TransactionListener = require('./src/TransactionListener.js');
 
 //Web 3 libs
 var Web3 = require('web3');
 const ETH_NODE = '' // To be defined
 var web3 = new Web3(ETH_NODE)
+
 
 // Firebase database
 const firebase = require("firebase");
@@ -28,7 +30,36 @@ var config = {
     messagingSenderId: "59474180269"
 };
 firebase.initzializeApp(config)
-var database = firebase.database(); // Get database instance
+var database = firebase.database(); 
+
+// We define a function for transaction listening 
+var storeTransactionInFirebase =  (err, result) => {
+    var paramsObject;
+    var refFrom, refTo,refTransactions;
+    if(err){
+        return;
+    }
+    if(result.removed){ 
+        return;
+    }
+    paramsObject= result.args;
+    paramsObject.blockNumber = result.blockNumber;
+    paramsObject.blockHash = result.blockHash;
+    refFrom = database.ref('addresses/'+paramsObject.from+'/'+result.transactionHash);
+    refTo =  database.ref('addresses/'+paramsObject.to+'/'+result.transactionHash);
+    if(!result.blockHash) {
+        refTransactions = database.ref('pendingTransactions/'+result.transactionHash);
+        refTransactions.set(
+        {
+            hash: result.transactionHash,
+            from: paramsObject.from,
+            to: paramsObject.to
+        });
+    }
+    refTo.set(paramsObject);
+    refFrom.set(paramsObject);
+}
+
 
 // configure app to use bodyParser()
 // this will let us get the data from a POST
