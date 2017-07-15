@@ -1,4 +1,6 @@
-const firebase = require("firebase");
+/**
+ * Created by jessdotjs on 15/07/17.
+ */
 var Web3 = require("web3");
 
 
@@ -12,16 +14,6 @@ function TransactionListener(web3Node) {
         err.name = "NoWeb3InstanceError";
         throw err;
     }
-    /*
-    if(firebaseDatabase){
-        this.firebaseDatabase = firebaseDatabase;
-    }
-    else {
-        err = new Error("A firebaseDatabase valid instance must be provided");
-        err.name = "NoFirebaseDatabaseInstanceError";
-        throw err;
-    }
-    */
     this.eventIndex = {};
 }
 
@@ -47,7 +39,7 @@ TransactionListener.prototype.loadContract = function(contractObject,address){
         }
 
     }
-}
+};
 
 TransactionListener.prototype.setAddressContract = function(address){
     var err;
@@ -64,7 +56,7 @@ TransactionListener.prototype.setAddressContract = function(address){
         err.message = "AddressNotValidError";
         throw err;
     }
-}
+};
 
 TransactionListener.prototype.listenToEvent = function(eventName,customName,callback) {
     var err;
@@ -80,12 +72,12 @@ TransactionListener.prototype.listenToEvent = function(eventName,customName,call
         err.message = "NoEventNameGiven";
         throw err;
     } else if (typeof eventName !== 'string'){
-        rr = new Error("Event name must be string");
+        err = new Error("Event name must be string");
         err.message = "EventNameNotString";
         throw err;
     }
-    
-    eventFuntion = this.contract[eventName]
+
+    eventFuntion = this.contract[eventName];
     eventObject = eventFuntion();
     eventObject.watch(callback);
 
@@ -96,25 +88,24 @@ TransactionListener.prototype.listenToEvent = function(eventName,customName,call
         throw err;
     }
     this.eventIndex[(customName) ? customName : eventName] = eventObject;
-}
+};
 
 TransactionListener.prototype.stopListening = function(eventName) {
+    var err;
+    var returnValue;
+
     if(eventName && typeof eventName !== 'string'){
         err = new Error("Custom name must be string and not empty");
         err.message = "EventNameNotString";
         throw err;
     }
-    var returnValue;
     try{
         this.eventIndex[eventName].stopWatching();
         returnValue = true;
     } catch(err) {
         returnValue = false;
-    } 
+    }
     return returnValue;
-}
+};
 
 module.exports = TransactionListener;
-
-
-
