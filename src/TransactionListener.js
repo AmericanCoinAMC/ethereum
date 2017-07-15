@@ -2,17 +2,17 @@ const firebase = require("firebase");
 var Web3 = require("web3");
 
 
-function TransactionListener(web3Node,firebaseDatabase) {
+function TransactionListener(web3Node) {
     var err;
-    if(web3Node){
-        this.web3Node = web3Node;
+    if(web3Node.isConnected()){
+        this.web3 = web3Node;
     }
     else {
         err = new Error("A web3 valid instance must be provided");
         err.name = "NoWeb3InstanceError";
         throw err;
     }
-
+    /*
     if(firebaseDatabase){
         this.firebaseDatabase = firebaseDatabase;
     }
@@ -21,11 +21,12 @@ function TransactionListener(web3Node,firebaseDatabase) {
         err.name = "NoFirebaseDatabaseInstanceError";
         throw err;
     }
+    */
     this.eventIndex = {};
 }
 
 TransactionListener.prototype.loadContract = function(contractObject,address){
-    const addrRegex = /^0x[0-9A-F]{40}$/;
+    const addrRegex = /^0x[0-9A-Fa-f]{40}$/;
     var err;
     var contract;
     if(!contractObject){
@@ -34,7 +35,7 @@ TransactionListener.prototype.loadContract = function(contractObject,address){
         throw err;
     }
     if(contractObject.abi){
-        contract = web3.eth.contract(contractObject.abi);
+        contract = this.web3.eth.contract(contractObject.abi);
     };
     if(address){
         if(addrRegex.test(address)){
@@ -50,7 +51,7 @@ TransactionListener.prototype.loadContract = function(contractObject,address){
 
 TransactionListener.prototype.setAddressContract = function(address){
     var err;
-    const addrRegex = /^0x[0-9A-F]{40}$/;
+    const addrRegex = /^0x[0-9A-Fa-f]{40}$/;
     if(!this.contract){
         eerr = new Error("Cotract attribute undefined");
         err.message = "UndefinedContractError";

@@ -4,20 +4,15 @@
 var ethereumjsWallet = require('ethereumjs-wallet');
 const firebase = require('firebase');
 var Tx = require('ethereumjs-tx');
-const ABI = require("./ABI");
-const contractAddress = "0x8cdb717604b2086064A1E44486606b0AAE96E58E"; //Modify
+const ABI = require("./Contract").abi;
+const contractAddress = require("./Contract").address; //Modify
+function Wallet (web3Node){
+    if(web3Node.isConnected()){
+        this.web3 = web3Node;
+        var MyContract = this.web3.eth.contract(ABI);
+        this.myContractInstance = MyContract.at(contractAddress);    
+    }
 
-function Wallet (web3Node,firebaseInstance,address){
-    this.web3 = web3Node;
-    var MyContract = this.web3.eth.contract(ABI);
-    this.myContractInstance = MyContract.at(contractAddress);
-   
-    if(firebaseInstance) {
-        this.firebaseInstance = firebaseInstance;
-    }
-    if(address && typeof address === 'string'){
-        this.address = (address.length === 42) ? address.substring(2) : address ;
-    }
 };
 
 Wallet.prototype.create = function(password) {
@@ -104,34 +99,39 @@ Wallet.prototype.cleanPrefix = function(key) {
     }
 };
 
-//To be tested
-Wallet.prototype.getTransactions = function(limit,address) {
-    var addrAux = (address) ? address : this.address;
-    var err;
-    //If I dont have an address I will throw an error be prepare to catch it.
-    if (!addrAux){
-        err =  new Error('No address found');
-        err.name = 'NoAddressError';
-        return err;
-    }
-    //Query the database.
-    // We don't know how much time this will take so better return a promise
-    return new Promise((resolve,reject) => {
-        this.firebaseInstance.ref('address/'+addrAux)
-            .limitToFirst(limit)
-            .once("value",
-            (snapshot,opionalString) => {
-                resolve(snapshot.val());
-            },
-            (errorObject) => {
-                reject(errorObject);
-            });
-    });
-}
+// //To be tested
+// Wallet.prototype.getTransactions = function(limit,address) {
+//     var addrAux = (address) ? address : this.address;
+//     var err;
+//     //If I dont have an address I will throw an error be prepare to catch it.
+//     if (!addrAux){
+//         err =  new Error('No address found');
+//         err.name = 'NoAddressError';
+//         return err;
+//     }
+//     //Query the database.
+//     // We don't know how much time this will take so better return a promise
+//     return new Promise((resolve,reject) => {
+//         this.firebaseInstance.ref('address/'+addrAux)
+//             .limitToFirst(limit)
+//             .once("value",
+//             (snapshot,opionalString) => {
+//                 resolve(snapshot.val());
+//             },
+//             (errorObject) => {
+//                 reject(errorObject);
+//             });
+//     });
+// }
 
 Wallet.prototype.getBalance = function (address){
-    var balance = this.myContractInstance.balanceOf(address).c[0];
+    var balance = this.myContractInstance.balanceOf(address).toNumber();
     return balance;
+}
+
+Wallet.prototype.getEthereumBalance = function (address){ //Ethereum balance
+    var balance = this.web3.eth.getBalance(address);
+    return this.web3.fromWei(balance.toNumber(),"ether");
 }
 
 Wallet.prototype.sendTransaction = function(fromAddress,toAddress,amount,gasLimit,PrivateKey){
@@ -141,7 +141,7 @@ Wallet.prototype.sendTransaction = function(fromAddress,toAddress,amount,gasLimi
         var gasPriceHex = self.web3.toHex(self.web3.eth.gasPrice);
         var gasLimitHex = self.web3.toHex(gasLimit);
         var payloadData = self.myContractInstance.transfer.getData(toAddress,amount);
-        var privateKey =PrivateKey;
+        var privateKey =PrivateKey; //Buffer
         var rawTx = {
           nonce: nonceHex,
           gasPrice: gasPriceHex, 
@@ -153,16 +153,35 @@ Wallet.prototype.sendTransaction = function(fromAddress,toAddress,amount,gasLimi
         var tx = new Tx(rawTx);
         tx.sign(privateKey); //Sign transaction
         var serializedTx = '0x'+ tx.serialize().toString('hex');
-       self.web3.eth.sendRawTransaction(serializedTx, function(err, hash) {
+        self.web3.eth.sendRawTransaction(serializedTx, function(err, hash) {
             if (err) {
                 reject(err);
             }
-
+            else{
+                firebase.database()
+                        .ref('AMC/Transactions/'+fromAddress.toLowerCase())
+                        .once('value')
+                        .then(function(snapshot){
+                           if( snapshot.val()==null ){
+                                firebase.database().ref('AMC/Transactions/'+fromAddress.toLowerCase()).set({
+                                    from: fromAddress.toLowerCase(),
+                                    to: toAddress.toLowerCase(),
+                                    amount: amount,
+                                    transactionHash: hash,
+                                    status: 'pending'
+                                });
+                                firebase.database().ref('AMC/Transactions/'+toAddress.toLowerCase()).set({
+                                    from: fromAddress.toLowerCase(),
+                                    to: toAddress.toLowerCase(),
+                                    amount: amount,
+                                    transactionHash: hash,
+                                    status: 'pending'
+                                });                
+                            }
+                        })
+            }  
         });
-
     });
-
-
 }
 
 
