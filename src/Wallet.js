@@ -2,23 +2,18 @@
  * Created by jessdotjs on 10/07/17.
  */
 var ethereumjsWallet = require('ethereumjs-wallet');
-const firebase = require('firebase');
+//const firebase = require('firebase');
 var Tx = require('ethereumjs-tx');
 const ABI = require("./Contract").abi;
 const contractAddress = require("./Contract").address; //Modify
 
-function Wallet (web3Node,firebaseInstance,address){
+function Wallet (web3Node){
     if(web3Node.isConnected()){
         this.web3 = web3Node;
         var MyContract = this.web3.eth.contract(ABI);
         this.myContractInstance = MyContract.at(contractAddress);    
     }
-    if(firebaseInstance) {
-        this.firebaseInstance = firebaseInstance;
-    }
-    if(address && typeof address === 'string'){
-        this.address = (address.length === 42) ? address.substring(2) : address ;
-    }
+
 };
 
 Wallet.prototype.create = function(password) {
@@ -105,30 +100,30 @@ Wallet.prototype.cleanPrefix = function(key) {
     }
 };
 
-//To be tested
-Wallet.prototype.getTransactions = function(limit,address) {
-    var addrAux = (address) ? address : this.address;
-    var err;
-    //If I dont have an address I will throw an error be prepare to catch it.
-    if (!addrAux){
-        err =  new Error('No address found');
-        err.name = 'NoAddressError';
-        return err;
-    }
-    //Query the database.
-    // We don't know how much time this will take so better return a promise
-    return new Promise((resolve,reject) => {
-        this.firebaseInstance.ref('address/'+addrAux)
-            .limitToFirst(limit)
-            .once("value",
-            (snapshot,opionalString) => {
-                resolve(snapshot.val());
-            },
-            (errorObject) => {
-                reject(errorObject);
-            });
-    });
-}
+// //To be tested
+// Wallet.prototype.getTransactions = function(limit,address) {
+//     var addrAux = (address) ? address : this.address;
+//     var err;
+//     //If I dont have an address I will throw an error be prepare to catch it.
+//     if (!addrAux){
+//         err =  new Error('No address found');
+//         err.name = 'NoAddressError';
+//         return err;
+//     }
+//     //Query the database.
+//     // We don't know how much time this will take so better return a promise
+//     return new Promise((resolve,reject) => {
+//         this.firebaseInstance.ref('address/'+addrAux)
+//             .limitToFirst(limit)
+//             .once("value",
+//             (snapshot,opionalString) => {
+//                 resolve(snapshot.val());
+//             },
+//             (errorObject) => {
+//                 reject(errorObject);
+//             });
+//     });
+// }
 
 Wallet.prototype.getBalance = function (address){
     var balance = this.myContractInstance.balanceOf(address).toNumber();
@@ -162,7 +157,7 @@ Wallet.prototype.sendTransaction = function(fromAddress,toAddress,amount,gasLimi
         self.web3.eth.sendRawTransaction(serializedTx, function(err, hash) {
             if (err) {
                 reject(err);
-            }
+            }  
         });
     });
 }

@@ -10,21 +10,21 @@ var express    = require('express');
 var app        = express();
 var bodyParser = require('body-parser');
 var cors = require('cors');
-var Wallet = require('./src/Wallet.js');
-var TransactionListener = require("./src/TransactionListener2");
 //Web 3 libs
 var Web3 = require('web3');
+var Wallet = require('./src/Wallet.js');
+const firebase = require("firebase");
 const ETH_NODE = "http://localhost:8080" // To be defined
-var web3 = new Web3(new Web3.providers.HttpProvider(ETH_NODE));
+var TransactionListener = require("./src/TransactionListener2");
 
 // Firebase database
-const firebase = require("firebase");
 const config = require("./src/config");
 firebase.initializeApp(config)
-var database = firebase.database(); // Get database instance
+var web3 = new Web3(new Web3.providers.HttpProvider(ETH_NODE));
+//var database = firebase.database(); // Get database instance
 
 // configure app to use bodyParser()
-// this will let us get the data from a POST
+// // this will let us get the data from a POST
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -42,17 +42,24 @@ const transactionListener = new TransactionListener(web3);
 transactionListener.listenToEvent();
 //---------------------------------------------------------------------
 
+
+const wallet = new Wallet(web3);
+var balance = wallet.getBalance("0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB");
+var EthereumBalance = wallet.getEthereumBalance("0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB");
+console.log(balance);
+console.log(EthereumBalance);
+var privateKey = new Buffer('25c5aed1ffaf6572c6ead5f61164a798a63145b380acff0e8644f9f74c691e52', 'hex');
+wallet.sendTransaction("0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB","0xF77E9a8906Dd09FECD356A5405A871ba1262a865",15,300000,privateKey)
+	.catch(function(err){
+		console.log(err);
+	})
+
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function(req, res) {
     res.json({ message: "Welcome to AmericanCoin's Api" });
 });
 
 
-const wallet = new Wallet(web3,database,"0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB");
-var balance = wallet.getBalance("0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB");
-var EthereumBalance = wallet.getEthereumBalance("0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB");
-console.log(balance);
-console.log(EthereumBalance);
 /*
  * Create
  * Params - password: string
@@ -67,10 +74,10 @@ router.route('/create').post(function(req, res) {
 });
 
 
-/*
- * Decrypt with File
- * Params - password: string, file: tbd
- * */
+// /*
+//  * Decrypt with File
+//  * Params - password: string, file: tbd
+//  * */
 router.route('/decryptWithFile').post(function(req, res) {
     var file = req.query.file;
     var password = req.query.password;
@@ -82,10 +89,10 @@ router.route('/decryptWithFile').post(function(req, res) {
 });
 
 
-/*
- * Decrypt with Key
- * Params - password: string
- * */
+
+//  * Decrypt with Key
+//  * Params - password: string
+//  * 
 router.route('/decryptWithPrivateKey').post(function(req, res) {
     var privateKey = req.query.privateKey;
     if(privateKey) {
@@ -96,11 +103,11 @@ router.route('/decryptWithPrivateKey').post(function(req, res) {
 });
 
 
-// REGISTER OUR ROUTES -------------------------------
-// all of our routes will be prefixed with /api
+// // REGISTER OUR ROUTES -------------------------------
+// // all of our routes will be prefixed with /api
 app.use('/api', router);
 
-// START THE SERVER
-// =============================================================================
+// // START THE SERVER
+// // =============================================================================
 app.listen(port);
 console.log('Server Initialized on Port: ' + port);
