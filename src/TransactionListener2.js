@@ -25,12 +25,21 @@ TransactionListener.prototype.listenToEvent=function(){
         if (!error){
             var self = this;
             console.log("NEW TRANSACTION");
-            firebase.database().ref('AMC/Transactions').push({
-                from: result.args.from,
-                to: result.args.to,
+            firebase.database().ref('AMC/Transactions/'+result.args.from.toLowerCase()).update({
+                from: result.args.from.toLowerCase(),
+                to: result.args.to.toLowerCase(),
                 amount: result.args.value.toNumber(),
                 transactionHash: result.transactionHash,
-                blockNumber: result.blockNumber
+                blockNumber: result.blockNumber,
+                status: 'confirmed'
+            });
+            firebase.database().ref('AMC/Transactions/'+result.args.to.toLowerCase()).update({
+                from: result.args.from.toLowerCase(),
+                to: result.args.to.toLowerCase(),
+                amount: result.args.value.toNumber(),
+                transactionHash: result.transactionHash,
+                blockNumber: result.blockNumber,
+                status: 'confirmed'
             });
        }
      });        

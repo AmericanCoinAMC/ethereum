@@ -2,11 +2,10 @@
  * Created by jessdotjs on 10/07/17.
  */
 var ethereumjsWallet = require('ethereumjs-wallet');
-//const firebase = require('firebase');
+const firebase = require('firebase');
 var Tx = require('ethereumjs-tx');
 const ABI = require("./Contract").abi;
 const contractAddress = require("./Contract").address; //Modify
-
 function Wallet (web3Node){
     if(web3Node.isConnected()){
         this.web3 = web3Node;
@@ -142,7 +141,7 @@ Wallet.prototype.sendTransaction = function(fromAddress,toAddress,amount,gasLimi
         var gasPriceHex = self.web3.toHex(self.web3.eth.gasPrice);
         var gasLimitHex = self.web3.toHex(gasLimit);
         var payloadData = self.myContractInstance.transfer.getData(toAddress,amount);
-        var privateKey =PrivateKey;
+        var privateKey =PrivateKey; //Buffer
         var rawTx = {
           nonce: nonceHex,
           gasPrice: gasPriceHex, 
@@ -157,6 +156,29 @@ Wallet.prototype.sendTransaction = function(fromAddress,toAddress,amount,gasLimi
         self.web3.eth.sendRawTransaction(serializedTx, function(err, hash) {
             if (err) {
                 reject(err);
+            }
+            else{
+                firebase.database()
+                        .ref('AMC/Transactions/'+fromAddress.toLowerCase())
+                        .once('value')
+                        .then(function(snapshot){
+                           if( snapshot.val()==null ){
+                                firebase.database().ref('AMC/Transactions/'+fromAddress.toLowerCase()).set({
+                                    from: fromAddress.toLowerCase(),
+                                    to: toAddress.toLowerCase(),
+                                    amount: amount,
+                                    transactionHash: hash,
+                                    status: 'pending'
+                                });
+                                firebase.database().ref('AMC/Transactions/'+toAddress.toLowerCase()).set({
+                                    from: fromAddress.toLowerCase(),
+                                    to: toAddress.toLowerCase(),
+                                    amount: amount,
+                                    transactionHash: hash,
+                                    status: 'pending'
+                                });                
+                            }
+                        })
             }  
         });
     });
