@@ -11,15 +11,15 @@ var app        = express();
 var bodyParser = require('body-parser');
 var cors = require('cors');
 var Wallet = require('./src/Wallet.js');
-var TransactionListener = require("./TransactionListener2");
+var TransactionListener = require("./src/TransactionListener2");
 //Web 3 libs
 var Web3 = require('web3');
-const ETH_NODE = '' // To be defined
+const ETH_NODE = "http://localhost:8080" // To be defined
 var web3 = new Web3(new Web3.providers.HttpProvider(ETH_NODE));
 
 // Firebase database
 const firebase = require("firebase");
-const config = require("./config");
+const config = require("./src/config");
 firebase.initializeApp(config)
 var database = firebase.database(); // Get database instance
 
@@ -48,9 +48,11 @@ router.get('/', function(req, res) {
 });
 
 
-const wallet = new Wallet();
-
-
+const wallet = new Wallet(web3,database,"0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB");
+var balance = wallet.getBalance("0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB");
+var EthereumBalance = wallet.getEthereumBalance("0x4AD40c0660f467C94cfA314Bae24c15DAeBd02EB");
+console.log(balance);
+console.log(EthereumBalance);
 /*
  * Create
  * Params - password: string
