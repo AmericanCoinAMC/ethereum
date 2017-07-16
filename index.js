@@ -15,8 +15,9 @@ var cors = require('cors');
 * API dependencies
 * */
 var Web3 = require("web3");
+const ETH_NODE = 'http://localhost:8000';
+var web3 = new Web3(new Web3.providers.HttpProvider(ETH_NODE));
 var Wallet = require('./src/Wallet.js');
-var TransactionListener = require('./src/TransactionListener.js');
 var Database = require('./src/Database.js');
 
 // configure app to use bodyParser()
@@ -35,37 +36,7 @@ var router = express.Router();              // get an instance of the express Ro
 
 //--------------------Event Listener ----------------------------------
 const contract = require("./src/Contract");
-const transactionListener = new TransactionListener(web3);
-transactionListener.loadContract(contract,contract.address);
-transactionListener.listenToEvent('Transfer',null, (err, result) => {
-    var paramsObject;
-    var refFrom, refTo,refTransactions;
-    var database = firebase.database();
-    console.log(result);
-    if(err){
-        console.log(err);
-        return;
-    }
-    if(result.removed){ 
-        return;
-    }
-    paramsObject= result.args;
-    paramsObject.blockNumber = result.blockNumber;
-    paramsObject.blockHash = result.blockHash;
-    refFrom = database.ref('addresses/'+paramsObject.from+'/'+result.transactionHash);
-    refTo =  database.ref('addresses/'+paramsObject.to+'/'+result.transactionHash);
-    if(!result.blockHash) {
-        refTransactions = database.ref('pendingTransactions/'+result.transactionHash);
-        refTransactions.set(
-        {
-            hash: result.transactionHash,
-            from: paramsObject.from,
-            to: paramsObject.to
-        });
-    }
-    refTo.set(paramsObject);
-    refFrom.set(paramsObject);
-});
+
 //---------------------------------------------------------------------
 
 
@@ -177,3 +148,4 @@ database.init()
         console.log(err);
     });
 
+database.listenToEvents(contract,web3);

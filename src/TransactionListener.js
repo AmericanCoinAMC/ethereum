@@ -6,7 +6,10 @@ var Web3 = require("web3");
 
 function TransactionListener(web3Node) {
     var err;
-    if(web3Node.isConnected()){
+    if(web3Node){
+        if (!web3Node.isConnected()){
+            console.log('web3 node is not connected');
+        }
         this.web3 = web3Node;
     }
     else {
@@ -15,6 +18,7 @@ function TransactionListener(web3Node) {
         throw err;
     }
     this.eventIndex = {};
+
 }
 
 TransactionListener.prototype.loadContract = function(contractObject,address){
