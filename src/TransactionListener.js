@@ -1,8 +1,8 @@
 /**
  * Created by jessdotjs on 15/07/17.
  */
+"use stict";
 var Web3 = require("web3");
-
 
 function TransactionListener(web3Node) {
     var err;
@@ -21,7 +21,7 @@ function TransactionListener(web3Node) {
 
 }
 
-TransactionListener.prototype.loadContract = function(contractObject,address){
+TransactionListener.prototype.loadContract = function (contractObject, address) {
     const addrRegex = /^0x[0-9A-Fa-f]{40}$/;
     var err;
     var contract;
