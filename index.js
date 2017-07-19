@@ -115,22 +115,6 @@ router.route('/decryptWithPrivateKey').post(function(req, res) {
     }
 });
 
-/**
- * Get Transactions - To retirve transactions from address
- * Params - address: string
- */
-
-router.route('/getTransactions').get(function (req, res) {
-    const address = req.query.address;
-    var trxs;
-    if (address){
-        trxs = wallet.getTransactions(address);
-        trxs.then( (transactions) => res.send(transactions))
-            .catch((err) => res.send(err));
-    }
-
-});
-
 
 
 /*
