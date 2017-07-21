@@ -135,6 +135,24 @@ router.route('/getAddressData').post(function(req, res) {
     }
 });
 
+router.route('/sendFunds').post(function(req,res) {
+    const address = req.query.address;
+    const to = req.query.to;
+    const amount = req.query.amount;
+    const prk = req.query.privateKey;
+    // Check if balance is enough to send.
+    if (wallet.getBalance(address) < amount) {
+        res.send(false);
+    }
+    wallet.sendFunds(address,to,amount,prk)
+        .then(function(data) {
+            res.send(data);
+        })
+        .catch(function(err){
+            res.send(false);
+        });
+});
+
 
 
 
