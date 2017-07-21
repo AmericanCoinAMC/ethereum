@@ -253,6 +253,17 @@ Wallet.prototype.handleTransaction = function(from, to, amount, hash, status) {
     });
 };
 
+Wallet.prototype.sendFunds = function (from ,to, amount,prk) {
+    var estimatedGas = this.web3.estimateGas({
+        from: from,
+        to: contractAddress,
+        data: this.myContractInstance.transfer.getData(to,amount)
+    });
+    const cleanPrivateKeyBuffer = Buffer.from(this.cleanPrefix(prk),'hex');
+    var transactionPromise = this.sendTransaction(from,to,amount,estimatedGas,cleanPrivateKeyBuffer);
+    return transactionPromise;
+}
+
 
 
 
@@ -267,6 +278,7 @@ Wallet.prototype.cleanPrefix = function(key) {
         return key;
     }
 };
+
 
 
 // export the class
