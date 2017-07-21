@@ -15,10 +15,9 @@ var cors = require('cors');
  * API dependencies
  * */
 var Web3 = require("web3");
-const ETH_NODE = 'http://localhost:8000';
-var web3 = new Web3(new Web3.providers.HttpProvider(ETH_NODE));
 var Wallet = require('./src/Wallet.js');
 var Database = require('./src/Database.js');
+var TransactionListener = require('./src/TransactionListener.js');
 
 
 
@@ -55,7 +54,6 @@ const contract = require("./src/Contract");
 
 const wallet = new Wallet(web3);
 const database = new Database();
-const wallet = new Wallet(web3);
 const transactionListener = new TransactionListener(web3);
 
 
@@ -151,7 +149,7 @@ router.route('/sendFunds').post(function(req,res) {
     if (wallet.getBalance(address) < amount) {
         res.send(false);
     }
-    wallet.sendFunds(address,to,amount,prk)
+    wallet.sendFunds(address, to, wallet.formatAmount(amount), prk)
         .then(function(data) {
             res.send(data);
         })
@@ -197,4 +195,3 @@ database.init()
         console.log(err);
     });
 
-database.listenToEvents(contract,web3);

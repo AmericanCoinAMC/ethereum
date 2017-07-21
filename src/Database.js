@@ -4,7 +4,6 @@
 
 
 const firebase = require("firebase");
-var TransactionListener = require('./TransactionListener.js');
 
 function Database() {
     this.config = {

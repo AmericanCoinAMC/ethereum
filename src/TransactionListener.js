@@ -5,6 +5,7 @@ const ABI = require("./Contract").abi;
 const contractAddress = require("./Contract").address; //Modify
 const Database = require('./Database');
 
+
 function TransactionListener(web3Node) {
     var err;
     if(web3Node){
