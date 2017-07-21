@@ -18,16 +18,13 @@ function Database() {
 
     this.email = 'americancoin.amc@gmail.com';
     this.password = 'Am$C.F.CO1n-';
-
-    this.rootRef = null;
-};
+}
 
 
 Database.prototype.init = function () {
     const self = this;
+    firebase.initializeApp(this.config);
     return new Promise(function (resolve, reject){
-        firebase.initializeApp(self.config);
-        self.rootRef = firebase.database().ref();
         // Authenticate API
         firebase.auth()
             .signInWithEmailAndPassword(self.email, self.password)
@@ -44,6 +41,7 @@ Database.prototype.init = function () {
 Database.prototype.processFanoutObject = function(fanoutObj) {
     const self = this;
     return new Promise(function(resolve, reject) {
+        self.rootRef = firebase.database().ref();
         self.rootRef.update(fanoutObj)
             .then(function(response) {
                 resolve(response);
@@ -51,38 +49,31 @@ Database.prototype.processFanoutObject = function(fanoutObj) {
     });
 };
 
-Database.prototype.listenToEvents = function(contract,web3) {
-    this.transactionListener = new TransactionListener(web3);
-    this.transactionListener.loadContract(contract,contract.address);
-    this.transactionListener.listenToEvent('Transfer',null, (err, result) => {
-        var paramsObject;
-        var refFrom, refTo,refTransactions;
-        var database = firebase.database();
-        console.log(result);
-        if(err){
-            console.log(err);
-            return;
-        }
-        if(result.removed){ 
-            return;
-        }
-        paramsObject= result.args;
-        paramsObject.blockNumber = result.blockNumber;
-        paramsObject.blockHash = result.blockHash;
-        refFrom = database.ref('addresses/'+paramsObject.from+'/'+result.transactionHash);
-        refTo =  database.ref('addresses/'+paramsObject.to+'/'+result.transactionHash);
-        if(!result.blockHash) {
-            refTransactions = database.ref('pendingTransactions/'+result.transactionHash);
-            refTransactions.set(
-            {
-                hash: result.transactionHash,
-                from: paramsObject.from,
-                to: paramsObject.to
-            });
-        }
-        refTo.set(paramsObject);
-        refFrom.set(paramsObject);
+Database.prototype.getTransactions = function (address) {
+    const self = this;
+
+    return new Promise(function (resolve, reject) {
+        firebase.database().ref().child('transactions/' + address)
+            .once('value')
+            .then(function(snapshot){
+                resolve(snapshot);
+            }).catch(function (err) {reject(err);})
     });
-}
+};
+
+Database.prototype.TransactionConfirmed = function(participantRefs){
+    const self = this;
+    return new Promise(function (resolve, reject){
+        firebase.database().ref().child(participantRefs[0])
+                .once('value')
+                .then(function(snapshot){
+                    if( !snapshot.exists() ){
+                        resolve(true);
+                    }
+                    else{ reject(false) }
+                })
+    })
+};
+
 
 module.exports = Database;

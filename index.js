@@ -4,21 +4,23 @@
 
 
 /*
-* Server Related
-* */
+ * Server Related
+ * */
 var express    = require('express');
 var app        = express();
 var bodyParser = require('body-parser');
 var cors = require('cors');
 
 /*
-* API dependencies
-* */
+ * API dependencies
+ * */
 var Web3 = require("web3");
 const ETH_NODE = 'http://localhost:8000';
 var web3 = new Web3(new Web3.providers.HttpProvider(ETH_NODE));
 var Wallet = require('./src/Wallet.js');
 var Database = require('./src/Database.js');
+
+
 
 // configure app to use bodyParser()
 // // this will let us get the data from a POST
@@ -26,7 +28,18 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 
+// Allow CORS Requests
 app.use(cors());
+
+
+
+/*
+* Properties Init
+* */
+
+
+const ETH_NODE = "http://162.243.56.234:8000"; //NODE URL
+var web3 = new Web3(new Web3.providers.HttpProvider(ETH_NODE));
 
 var port = process.env.PORT || 8080;        // set our port
 
@@ -42,6 +55,9 @@ const contract = require("./src/Contract");
 
 const wallet = new Wallet(web3);
 const database = new Database();
+const wallet = new Wallet(web3);
+const transactionListener = new TransactionListener(web3);
+
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function(req, res) {
@@ -107,6 +123,7 @@ router.route('/decryptWithPrivateKey').post(function(req, res) {
 });
 
 
+
 /*
  * Get Address Data - For refreshing purposes
  * Params - address: string
@@ -125,21 +142,53 @@ router.route('/getAddressData').post(function(req, res) {
     }
 });
 
+router.route('/sendFunds').post(function(req,res) {
+    const address = req.query.address;
+    const to = req.query.to;
+    const amount = req.query.amount;
+    const prk = req.query.privateKey;
+    // Check if balance is enough to send.
+    if (wallet.getBalance(address) < amount) {
+        res.send(false);
+    }
+    wallet.sendFunds(address,to,amount,prk)
+        .then(function(data) {
+            res.send(data);
+        })
+        .catch(function(err){
+            res.send(false);
+        });
+});
+
+
+router.route('/getEstimatedFee').post(function(req,res){
+    var address = req.query.address;
+    var amount = req.query.amount;
+    if(address && amount){
+        var EstimateFee = wallet.estimateFee(address,amount);
+        res.send({estimateFee:EstimateFee});
+    }
+})
+
 
 
 /*
-* Initialize Database & App
-* */
+ * Initialize Database & App
+ * */
+
 database.init()
     .then(function (initialized){
         if (initialized) {
-            // REGISTER OUR ROUTES
-            // all of our routes will be prefixed with /api
+            // Initialize contract event listener
+            transactionListener.listenToEvent(); //Transaction Listener
+
+            // Register routes and add api prefix
             app.use('/api', router);
 
-            // START THE SERVER
+            // Start the server
             app.listen(port);
             console.log('Server Initialized on Port: ' + port);
+
         }else {
             return false;
         }
