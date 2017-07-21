@@ -131,12 +131,23 @@ Wallet.prototype.getAddressData = function (address) {
 };
 
 Wallet.prototype.getBalance = function (address) {
-    return this.myContractInstance.balanceOf(address).toNumber();
+    return this.formatBalance( this.myContractInstance.balanceOf(address).toNumber() );
 };
 
 Wallet.prototype.getEthereumBalance = function (address) { //Ethereum balance
     var balance = this.web3.eth.getBalance(address);
     return this.web3.fromWei(balance.toNumber(),"ether");
+};
+
+Wallet.prototype.estimateFee = function(toAddress,amount){
+    var estimateGas = this.web3.eth.estimateGas({
+            to: contractAddress, 
+            data: this.myContractInstance.transfer.getData(toAddress,this.formatAmount(amount))
+        });
+    var gasPrice =this.web3.fromWei(this.web3.eth.gasPrice.toNumber(),"ether"); 
+    var estimateFee = estimateGas*gasPrice;
+    return estimateFee;
+
 };
 
 
@@ -182,7 +193,7 @@ Wallet.prototype.sendTransaction = function(fromAddress, toAddress, amount, gasL
         const nonceHex = self.web3.toHex(self.web3.eth.getTransactionCount(fromAddress));
         const gasPriceHex = self.web3.toHex(self.web3.eth.gasPrice);
         const gasLimitHex = self.web3.toHex(gasLimit);
-        const payloadData = self.myContractInstance.transfer.getData(toAddress,amount);
+        const payloadData = self.myContractInstance.transfer.getData(toAddress,self.formatAmount(amount));
         const privateKey = PrivateKey; //Buffer
         const rawTx = {
             nonce: nonceHex,
@@ -192,29 +203,43 @@ Wallet.prototype.sendTransaction = function(fromAddress, toAddress, amount, gasL
             value: '0x00',
             data: payloadData
         };
-
         // Generate tx
         const tx = new Tx(rawTx);
         tx.sign(privateKey); //Sign transaction
         const serializedTx = '0x'+ tx.serialize().toString('hex');
+        if(amount>self.getBalance(fromAddress) || self.formatAmount(amount)<1){
+            reject(false);
+        }
+        else{
+            
+            self.web3.eth.sendRawTransaction(serializedTx, function(err, hash){
+                if(!err){
 
-        self.web3.eth.sendRawTransaction(serializedTx, function(err, hash){
-
-            /*
-            * I dont think this should be here.
-            *
-            * This function should be called by the Event listener when
-            * 0 confirmations -> status = false
-            * 1 confirmation -> status = true
-            * */
-            self.handleTransaction(fromAddress, toAddress, amount, hash, false)
-                .then(function() {
-                    resolve(true)
-                })
-                .catch(function (err) {reject(err)})
-        });
+                /*
+                * I dont think this should be here.
+                *
+                * This function should be called by the Event listener when
+                * 0 confirmations -> status = false
+                * 1 confirmation -> status = true
+                * */
+                    self.handleTransaction(fromAddress, toAddress, amount, hash, false)
+                        .then(function() {
+                            resolve(true)
+                        })
+                        .catch(function (err) {reject(err)})
+                }else{ reject(err) }
+            });
+        }
     });
 };
+
+Wallet.prototype.formatAmount=function(amount){
+    return amount*Math.pow(10,8);
+}
+
+Wallet.prototype.formatBalance=function(balance){
+    return balance*Math.pow(10,-8);
+}
 
 
 Wallet.prototype.handleTransaction = function(from, to, amount, hash, status) {

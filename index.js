@@ -154,6 +154,15 @@ router.route('/sendFunds').post(function(req,res) {
 });
 
 
+router.route('/getEstimatedFee').post(function(req,res){
+    var address = req.query.address;
+    var amount = req.query.amount;
+    if(address && amount){
+        var EstimateFee = wallet.estimateFee(address,amount);
+        res.send({estimateFee:EstimateFee});
+    }
+})
+
 
 
 /*
@@ -172,6 +181,7 @@ database.init()
             // Start the server
             app.listen(port);
             console.log('Server Initialized on Port: ' + port);
+
         }else {
             return false;
         }
